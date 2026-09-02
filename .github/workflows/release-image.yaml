@@ -37,14 +37,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Determine Image Tag
+      - name: Determine Image Name and Tag
         id: meta
         run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+            TAG="${{ github.event.inputs.tag }}"
           else
-            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            TAG="${{ github.ref_name }}"
           fi
+          echo "image=ghcr.io/${REPO_LOWER}:${TAG}" >> $GITHUB_OUTPUT
 
       - name: Build and push multi-arch image
         uses: docker/build-push-action@v5
@@ -54,4 +56,4 @@ jobs:
           target: production
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.tag }}
+          tags: ${{ steps.meta.outputs.image }}
